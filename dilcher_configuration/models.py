@@ -31,6 +31,7 @@ this attribute is just used to describe and identify the current set of configur
             "Meta information. Set to the current date and time when a Settings instance is set to active=True."
         ),
         editable=False,
+        null=True,
     )
     last_deactivation_time = models.DateTimeField(
         verbose_name=_("time of last deactivation"),
@@ -38,6 +39,7 @@ this attribute is just used to describe and identify the current set of configur
             "Meta information. Set to the current date and time when a Settings instance is set to active=False."
         ),
         editable=False,
+        null=True,
     )
     last_value_change = models.DateTimeField(
         verbose_name=_("time of last data change"),
@@ -46,6 +48,7 @@ Meta information. Set to the current date and time when a Settings instance is s
 """
                     ),
         editable=False,
+        null=True,
     )
 
     @classmethod
@@ -61,7 +64,7 @@ Meta information. Set to the current date and time when a Settings instance is s
         try:
             return cls.objects.filter(active=True).first()
         except cls.DoesNotExist:
-            return False
+            return None
 
     def __str__(self):
         """
@@ -92,10 +95,14 @@ def update_timestamps(sender, instance, **_kwargs):
     * Set the last_value_change to now() if any attribute that is not defined in the base class changes.
 
     :param sender: The sender class (Setting)
+    :type sender: Type[Setting]
     :param instance: The setting instance that should be saved
     :type instance: Setting
     :param _kwargs: Additional keyword arguments
     """
+    if not issubclass(sender, Setting):
+        raise TypeError('Sender must be subclass of dilcher_configuration.models.Setting')
+
     try:
         old_instance = sender.objects.get(pk=instance.pk)
     except sender.DoesNotExist:
@@ -135,10 +142,14 @@ def ensure_active(sender, instance, **_kwargs):
     Deactivate other Setting instances if the current instance has active set to True.
 
     :param sender: The sender class (Setting)
+    :type sender: Type[Setting]
     :param instance: The setting instance that has been saved
     :type instance: Setting
     :param _kwargs: Additional keyword arguments
     """
+    if not issubclass(sender, Setting):
+        raise TypeError('Sender must be subclass of dilcher_configuration.models.Setting')
+
     if instance.active:
         for s in sender.objects.exclude(pk=instance.pk).filter(active=True):
             s.active = False
