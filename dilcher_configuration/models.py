@@ -61,8 +61,8 @@ Meta information. Set to the current date and time when a Settings instance is s
         :rtype: Setting | None
         """
         try:
-            return Setting.objects.filter(active=True).first()
-        except Setting.DoesNotExist:
+            return cls.objects.filter(active=True).first()
+        except cls.DoesNotExist:
             return False
 
     def __str__(self):
@@ -99,8 +99,8 @@ def update_timestamps(sender, instance, **_kwargs):
     :param _kwargs: Additional keyword arguments
     """
     try:
-        old_instance = Setting.objects.get(pk=instance.pk)
-    except Setting.DoesNotExist:
+        old_instance = sender.objects.get(pk=instance.pk)
+    except sender.DoesNotExist:
         old_instance = None
 
     # set last_activation_time, if required
@@ -123,7 +123,7 @@ def update_timestamps(sender, instance, **_kwargs):
             "last_deactivation_time",
             "last_value_change",
         )
-        for field in Setting._meta.fields:
+        for field in sender._meta.fields:
             if field.name not in excluded_names:
                 if getattr(instance, field.name) != getattr(old_instance, field.name):
                     values_changed = True
@@ -142,6 +142,15 @@ def ensure_active(sender, instance, **_kwargs):
     :param _kwargs: Additional keyword arguments
     """
     if instance.active:
-        for s in Setting.objects.filter(pk__ne=instance.pk, active=True):
+        for s in sender.objects.filter(pk__ne=instance.pk, active=True):
             s.active = False
             s.save()
+    else:
+        if not sender.objects.filter(active=True).exists():
+            new_active = sender.objects.filter(pk__ne=instance.pk).order("-last_activation_time").first()
+            if new_active:
+                new_active.active = True
+                new_active.save()
+            else:
+                instance.active = True
+                instance.save()
