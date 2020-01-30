@@ -86,7 +86,6 @@ Meta information. Set to the current date and time when a Settings instance is s
         )
 
 
-@receiver(pre_save, sender=Setting)
 def update_timestamps(sender, instance, **_kwargs):
     """
     If the Setting model is saved, the meta data timestamps need to be updated:
@@ -133,7 +132,6 @@ def update_timestamps(sender, instance, **_kwargs):
             instance.last_value_change = now()
 
 
-@receiver(post_save, sender=Setting)
 def ensure_active(sender, instance, **_kwargs):
     """
     Deactivate other Setting instances if the current instance has active set to True.
