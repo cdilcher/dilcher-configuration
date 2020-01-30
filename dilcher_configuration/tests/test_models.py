@@ -530,10 +530,8 @@ class SettingTestCase(AbstractModelMixinTestCase):
         # 3. Execute function with 'control_instance' passed
         ensure_active(Model, control_instance)
 
-        # 4. Assert that inactive instances are still inactive
-        for instance in instances:
-            instance_in_db = Model.objects.get(pk=instance.pk)
-            self.assertFalse(instance_in_db.active)
+        # 4. Assert that there is exactly one active instance
+        self.assertEqual([Model.objects.get(pk=instance.pk).active for instance in instances].count(True), 1)
 
         # 5. Assert that control instance is still inactive
         control_instance_in_db = Model.objects.get(pk=control_instance.pk)

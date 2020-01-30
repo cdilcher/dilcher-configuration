@@ -156,7 +156,7 @@ def ensure_active(sender, instance, **_kwargs):
             s.save()
     else:
         if not sender.objects.filter(active=True).exists():
-            new_active = sender.objects.exclude(pk=instance.pk).order("-last_activation_time").first()
+            new_active = sender.objects.exclude(pk=instance.pk).order_by("-last_activation_time").first()
             if new_active:
                 new_active.active = True
                 new_active.save()
