@@ -33,6 +33,7 @@ this attribute is just used to describe and identify the current set of configur
             "Meta information. Set to the current date and time when a Settings instance is set to active=True."
         ),
         editable=False,
+        null=True,
     )
     last_deactivation_time = models.DateTimeField(
         verbose_name=_("time of last deactivation"),
@@ -40,6 +41,7 @@ this attribute is just used to describe and identify the current set of configur
             "Meta information. Set to the current date and time when a Settings instance is set to active=False."
         ),
         editable=False,
+        null=True,
     )
     last_value_change = models.DateTimeField(
         verbose_name=_("time of last data change"),
@@ -48,6 +50,7 @@ Meta information. Set to the current date and time when a Settings instance is s
 """
                     ),
         editable=False,
+        null=True,
     )
 
     @classmethod
@@ -61,9 +64,9 @@ Meta information. Set to the current date and time when a Settings instance is s
         :rtype: Setting | None
         """
         try:
-            return Setting.objects.filter(active=True).first()
-        except Setting.DoesNotExist:
-            return False
+            return cls.objects.filter(active=True).first()
+        except cls.DoesNotExist:
+            return None
 
     def __str__(self):
         """
@@ -95,13 +98,17 @@ def update_timestamps(sender, instance, **_kwargs):
     * Set the last_value_change to now() if any attribute that is not defined in the base class changes.
 
     :param sender: The sender class (Setting)
+    :type sender: Type[Setting]
     :param instance: The setting instance that should be saved
     :type instance: Setting
     :param _kwargs: Additional keyword arguments
     """
+    if not issubclass(sender, Setting):
+        raise TypeError('Sender must be subclass of dilcher_configuration.models.Setting')
+
     try:
-        old_instance = Setting.objects.get(pk=instance.pk)
-    except Setting.DoesNotExist:
+        old_instance = sender.objects.get(pk=instance.pk)
+    except sender.DoesNotExist:
         old_instance = None
 
     # set last_activation_time, if required
@@ -124,7 +131,7 @@ def update_timestamps(sender, instance, **_kwargs):
             "last_deactivation_time",
             "last_value_change",
         )
-        for field in Setting._meta.fields:
+        for field in sender._meta.fields:
             if field.name not in excluded_names:
                 if getattr(instance, field.name) != getattr(old_instance, field.name):
                     values_changed = True
@@ -139,11 +146,15 @@ def ensure_active(sender, instance, **_kwargs):
     Deactivate other Setting instances if the current instance has active set to True.
 
     :param sender: The sender class (Setting)
+    :type sender: Type[Setting]
     :param instance: The setting instance that has been saved
     :type instance: Setting
     :param _kwargs: Additional keyword arguments
     """
+    if not issubclass(sender, Setting):
+        raise TypeError('Sender must be subclass of dilcher_configuration.models.Setting')
+
     if instance.active:
-        for s in Setting.objects.filter(pk__ne=instance.pk, active=True):
+        for s in sender.objects.exclude(pk=instance.pk).filter(active=True):
             s.active = False
             s.save()
