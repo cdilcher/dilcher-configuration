@@ -1,6 +1,4 @@
 from django.db import models
-from django.db.models.signals import pre_save, post_save
-from django.dispatch import receiver
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
@@ -89,7 +87,6 @@ Meta information. Set to the current date and time when a Settings instance is s
         )
 
 
-@receiver(pre_save, sender=Setting)
 def update_timestamps(sender, instance, **_kwargs):
     """
     If the Setting model is saved, the meta data timestamps need to be updated:
@@ -140,7 +137,6 @@ def update_timestamps(sender, instance, **_kwargs):
             instance.last_value_change = now()
 
 
-@receiver(post_save, sender=Setting)
 def ensure_active(sender, instance, **_kwargs):
     """
     Deactivate other Setting instances if the current instance has active set to True.
@@ -158,3 +154,12 @@ def ensure_active(sender, instance, **_kwargs):
         for s in sender.objects.exclude(pk=instance.pk).filter(active=True):
             s.active = False
             s.save()
+    else:
+        if not sender.objects.filter(active=True).exists():
+            new_active = sender.objects.exclude(pk=instance.pk).order("-last_activation_time").first()
+            if new_active:
+                new_active.active = True
+                new_active.save()
+            else:
+                instance.active = True
+                instance.save()
