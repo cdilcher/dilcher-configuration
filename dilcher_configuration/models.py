@@ -1,6 +1,4 @@
 from django.db import models
-from django.db.models.signals import pre_save, post_save
-from django.dispatch import receiver
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
@@ -142,12 +140,12 @@ def ensure_active(sender, instance, **_kwargs):
     :param _kwargs: Additional keyword arguments
     """
     if instance.active:
-        for s in sender.objects.filter(pk__ne=instance.pk, active=True):
+        for s in sender.objects.exclude(pk=instance.pk).filter(active=True):
             s.active = False
             s.save()
     else:
         if not sender.objects.filter(active=True).exists():
-            new_active = sender.objects.filter(pk__ne=instance.pk).order("-last_activation_time").first()
+            new_active = sender.objects.exclude(pk=instance.pk).order("-last_activation_time").first()
             if new_active:
                 new_active.active = True
                 new_active.save()
