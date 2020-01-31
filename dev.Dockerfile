@@ -24,7 +24,8 @@ COPY Readme.md /tmp/dilcher-configuration/
 COPY setup.py /tmp/dilcher-configuration/
 COPY requirements.txt /tmp/dilcher-configuration/
 WORKDIR /tmp/dilcher-configuration
-RUN sed -i .bak "s/name=\"dilcher-configuration\"/name=\"dilcher-configuration-${pypidevtag}\"/g;" setup.py
+RUN mv setup.py setup.py.bak
+RUN sed -e "s/name=\"dilcher-configuration\"/name=\"dilcher-configuration-${pypidevtag}\"/g;" setup.py.bak > setup.py
 RUN python setup.py sdist bdist_wheel
 # App is packaged, publish it
 COPY pypirc /tmp/
