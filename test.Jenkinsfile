@@ -29,7 +29,7 @@ podTemplate(label: label, imagePullSecrets: ["regsecret"], containers: [
                     container_id=\$(docker create dilcher-configuration:${BRANCH_NAME_ESC}-${env.BUILD_NUMBER})
                     docker cp \$container_id:/tmp/test/test-reports - > ./test-reports
                     pwd
-                    find test-reports/
+                    find *
                     docker rm -v \$container_id
                     docker image rm -f dilcher-configuration:${BRANCH_NAME_ESC}-${env.BUILD_NUMBER}
                     """)
