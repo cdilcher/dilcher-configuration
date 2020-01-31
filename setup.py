@@ -4,7 +4,7 @@ with open("Readme.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-  name="dilcher-configuration", # Replace with your own username
+  name="dilcher-configuration",       # Replace with your own username
   version="0.5.4",
   author="Philipp Freyer",
   author_email="philipp.freyer@dilcher.de",
