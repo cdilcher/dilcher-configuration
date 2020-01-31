@@ -26,10 +26,10 @@ podTemplate(label: label, imagePullSecrets: ["regsecret"], containers: [
                     PYPI_USER=`cat /var/run/secrets/registry-account/username`
                     PYPI_PASSWORD=`cat /var/run/secrets/registry-account/password`
                     docker build -t dilcher-configuration:${BRANCH_NAME_ESC}-${env.BUILD_NUMBER} --build-arg pypiuser="\${PYPI_USER}" --build-arg pypipass="\${PYPI_PASSWORD}" -f ./test.Dockerfile .
-                    container_id=$(docker create dilcher-configuration:${BRANCH_NAME_ESC}-${env.BUILD_NUMBER})
+                    container_id=\$(docker create dilcher-configuration:${BRANCH_NAME_ESC}-${env.BUILD_NUMBER})
                     mkdir -p test-reports
-                    docker cp $container_id:/tmp/test/test-reports - > ./test-reports
-                    docker rm -v $container_id
+                    docker cp \$container_id:/tmp/test/test-reports - > ./test-reports
+                    docker rm -v \$container_id
                     docker image rm -f dilcher-configuration:${BRANCH_NAME_ESC}-${env.BUILD_NUMBER}
                     """)
                 }
