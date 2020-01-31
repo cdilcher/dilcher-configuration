@@ -1,0 +1,13 @@
+version: '2.4'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: ./test.Dockerfile
+    image: cdilcher/dilcher-configuration:latest
+    networks:
+      - dilcher-configuration-network
+
+networks:
+  dilcher-configuration-network:
