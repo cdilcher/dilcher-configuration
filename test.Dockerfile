@@ -11,8 +11,8 @@ WORKDIR /tmp/test
 RUN mkdir -p /tmp/test/test-reports/flake8
 RUN mkdir -p /tmp/test/test-reports/unittest
 RUN mkdir -p /tmp/test/test-reports/coverage
-RUN flake8 --output-file=/tmp/test/test-reports/flake8/flake8.txt --tee --exit-zero . 2>&1
-RUN flake8_junit /tmp/test/test-reports/flake8/flake8.txt /tmp/test/test-reports/flake8/flake8_junit.xml
+RUN flake8 --format=pylint --output-file=/tmp/test/test-reports/flake8/flake8.txt --tee --exit-zero . 2>&1
+# RUN flake8_junit /tmp/test/test-reports/flake8/flake8.txt /tmp/test/test-reports/flake8/flake8_junit.xml
 RUN coverage run --source="." manage.py test dilcher_configuration.tests
 RUN coverage report
 RUN coverage xml

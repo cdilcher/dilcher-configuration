@@ -37,8 +37,10 @@ podTemplate(label: label, imagePullSecrets: ["regsecret"], containers: [
                 }
         }
 
-        stage('Publishing test coverage results') {
+        stage('Publishing test & coverage results') {
             cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/test-reports/coverage/coverage.xml', conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false
+            junit allowEmptyResults: true, testResults: '**/test-reports/unittest/unittest.xml'
+            recordIssues(tools: [flake8(pattern: '**/test-reports/flake8/flake8.txt')])
         }
     }
 }
