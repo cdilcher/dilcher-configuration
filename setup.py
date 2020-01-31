@@ -5,7 +5,7 @@ with open("Readme.md", "r") as fh:
 
 setuptools.setup(
   name="dilcher-configuration",       # Replace with your own username
-  version="0.5.4",
+  version="0.5.5",
   author="Philipp Freyer",
   author_email="philipp.freyer@dilcher.de",
   description="The dilcher-configuration Django app is used to provide easily manageable settings for Django projects.",
