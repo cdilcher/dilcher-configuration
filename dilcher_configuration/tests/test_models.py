@@ -26,28 +26,28 @@ class SettingTestCase(AbstractModelMixinTestCase):
             },
             'name': {
                 'class': models.CharField,
-                'default': models.NOT_PROVIDED,
+                'default': models.fields.NOT_PROVIDED,
                 'null': False,
                 'max_length': 254,
                 'editable': True,
             },
             'last_activation_time': {
                 'class': models.DateTimeField,
-                'default': models.NOT_PROVIDED,
+                'default': None,
                 'null': True,
                 'max_length': None,
                 'editable': False,
             },
             'last_deactivation_time': {
                 'class': models.DateTimeField,
-                'default': models.NOT_PROVIDED,
+                'default': None,
                 'null': True,
                 'max_length': None,
                 'editable': False,
             },
             'last_value_change': {
                 'class': models.DateTimeField,
-                'default': models.NOT_PROVIDED,
+                'default': None,
                 'null': True,
                 'max_length': None,
                 'editable': False,
@@ -73,42 +73,20 @@ class SettingTestCase(AbstractModelMixinTestCase):
         """
         # 1. Create model instance without explicitly defined field values
         Model = self.__class__.model
+        active_instance = Model.objects.create()
         result = Model.objects.create()
 
         # 2. Check automatically assigned values
-        self.assertEqual(result.active, False)
+        self.assertFalse(result.active)
+        self.assertTrue(active_instance.active)
         self.assertEqual(result.name, '')
         self.assertEqual(result.last_activation_time, None)
         self.assertEqual(result.last_deactivation_time, None)
-        self.assertEqual(result.last_value_change, None)
+        self.assertIsNotNone(result.last_value_change)
 
         # 3. Clean up
         result.delete()
-
-    def test_model_custom_fields(self):
-        """
-        This test ensures that passed values are assigned without any modifications
-        """
-        # 1. Create model instance with explicitly defined fields
-        dt_now = now()
-        Model = self.__class__.model
-        result = Model.objects.create(
-            active=True,
-            name='Test Model',
-            last_activation_time=dt_now,
-            last_deactivation_time=dt_now,
-            last_value_change=dt_now,
-        )
-
-        # 2. Check assigned values
-        self.assertEqual(result.active, True)
-        self.assertEqual(result.name, 'Test Model')
-        self.assertEqual(result.last_activation_time, dt_now)
-        self.assertEqual(result.last_deactivation_time, dt_now)
-        self.assertEqual(result.last_value_change, dt_now)
-
-        # 3. Clean up
-        result.delete()
+        active_instance.delete()
 
     def test_get_active_settings_empty(self):
         """
@@ -119,15 +97,9 @@ class SettingTestCase(AbstractModelMixinTestCase):
         result = Model.get_active_settings()
         self.assertIsNone(result)
 
-        # 2. Create a model instance with active=False flag
-        non_active = Model.objects.create(name='Test Inactive', active=False)
-
-        # 3. Execute function on model when database contains only inactive models and assert that it returned None
+        # 3. Execute function on model when database contains no models and assert that it returned None
         result = Model.get_active_settings()
         self.assertIsNone(result)
-
-        # 4. Clean up
-        non_active.delete()
 
     def test_get_active_settings_with_active(self):
         """
@@ -157,6 +129,8 @@ class SettingTestCase(AbstractModelMixinTestCase):
         # 2. Create inactive setting instance without 'last_activation_time' field
         Model = self.__class__.model
         non_active = Model.objects.create(name='Test Inactive', active=False)
+        non_active.last_activation_time = None
+        non_active.active = False
         # 3. Assert function result
         self.assertEqual(non_active.__str__(), 'Test Inactive (-)')
 
@@ -166,11 +140,14 @@ class SettingTestCase(AbstractModelMixinTestCase):
             active=False,
             last_activation_time=dt_now,
         )
+        non_active_with_activation_time.active = False
+        non_active_with_activation_time.last_activation_time = dt_now
         # 5. Assert function result
         self.assertEqual(non_active_with_activation_time.__str__(), 'Test Inactive 2 ({0})'.format(str_dt_now))
 
         # 6. Create an active setting instance without 'last_activation_time' field
         active = Model.objects.create(name='Test Active', active=True)
+        active.last_activation_time = None
         # 7. Assert function result
         self.assertEqual(active.__str__(), '* Test Active (-)')
 
@@ -180,6 +157,7 @@ class SettingTestCase(AbstractModelMixinTestCase):
             active=True,
             last_activation_time=dt_now,
         )
+        active_with_activation_time.last_activation_time = dt_now
         # 9. Assert function result
         self.assertEqual(active_with_activation_time.__str__(), '* Test Active 2 ({0})'.format(str_dt_now))
 
@@ -225,6 +203,7 @@ class SettingTestCase(AbstractModelMixinTestCase):
         Model = self.__class__.model
         before_run = now()
         instance = Model.objects.create(active=False)
+        instance.last_value_change = None
 
         # 2. Set instance to be active and execute function
         instance.active = True
@@ -252,13 +231,14 @@ class SettingTestCase(AbstractModelMixinTestCase):
         # 1. Create active instance in database
         Model = self.__class__.model
         instance = Model.objects.create(active=True)
+        instance.last_value_change = None
 
         # 2. Set instance to be active and execute function
         instance.active = True
         update_timestamps(Model, instance)
 
         # 3. Assert that timestamps were not assigned
-        self.assertIsNone(instance.last_activation_time)
+        self.assertIsNotNone(instance.last_activation_time)
         self.assertIsNone(instance.last_deactivation_time)
         self.assertIsNone(instance.last_value_change)
 
@@ -297,6 +277,8 @@ class SettingTestCase(AbstractModelMixinTestCase):
         Model = self.__class__.model
         before_run = now()
         instance = Model.objects.create(active=True)
+        instance.last_activation_time = None
+        instance.last_value_change = None
 
         # 2. Set instance to be inactive and execute function
         instance.active = False
@@ -323,7 +305,9 @@ class SettingTestCase(AbstractModelMixinTestCase):
         """
         # 1. Create inactive instance in database
         Model = self.__class__.model
+        active_instance = Model.objects.create(active=True)
         instance = Model.objects.create(active=False)
+        instance.last_value_change = None
 
         # 2. Set instance to be inactive and execute function
         instance.active = False
@@ -336,6 +320,7 @@ class SettingTestCase(AbstractModelMixinTestCase):
 
         # 4. Clean up
         instance.delete()
+        active_instance.delete()
 
     def test_update_timestamps_value_change_excluded(self):
         """
@@ -344,7 +329,7 @@ class SettingTestCase(AbstractModelMixinTestCase):
         # 1. Create Setting instance
         Model = self.__class__.model
         instance = Model.objects.create(active=False)
-
+        instance.last_value_change = None
         initial_name = instance.name
         initial_active = instance.active
         initial_last_activation_time = instance.last_activation_time
@@ -470,10 +455,10 @@ class SettingTestCase(AbstractModelMixinTestCase):
         # 3. Execute function with 'control_instance' passed
         ensure_active(Model, control_instance)
 
-        # 4. Assert that active instances are still active
+        # 4. Assert that previously active instances are all inactive - except for the last one
         for instance in instances:
             instance_in_db = Model.objects.get(pk=instance.pk)
-            self.assertTrue(instance_in_db.active)
+            self.assertEqual(instance_in_db.active, instance_in_db.pk == instances[9].pk)
 
         # 5. Assert that control instance is still inactive
         control_instance_in_db = Model.objects.get(pk=control_instance.pk)

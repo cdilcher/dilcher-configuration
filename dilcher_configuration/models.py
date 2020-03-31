@@ -32,6 +32,7 @@ this attribute is just used to describe and identify the current set of configur
         ),
         editable=False,
         null=True,
+        default=None,
     )
     last_deactivation_time = models.DateTimeField(
         verbose_name=_("time of last deactivation"),
@@ -40,6 +41,7 @@ this attribute is just used to describe and identify the current set of configur
         ),
         editable=False,
         null=True,
+        default=None,
     )
     last_value_change = models.DateTimeField(
         verbose_name=_("time of last data change"),
@@ -49,7 +51,14 @@ Meta information. Set to the current date and time when a Settings instance is s
                     ),
         editable=False,
         null=True,
+        default=None,
     )
+
+    @classmethod
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        models.signals.post_save.connect(ensure_active, sender=cls)
+        models.signals.pre_save.connect(update_timestamps, sender=cls)
 
     @classmethod
     def get_active_settings(cls):
