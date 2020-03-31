@@ -6,8 +6,6 @@ from django.db.utils import ProgrammingError
 from django.test import TestCase
 
 
-# @TODO: This code is present in a 'dilcher_snippets' package of liquidvu.
-# @TODO: Maybe move that package into a separate pypi package and install as a dependency
 # Adapted from https://stackoverflow.com/questions/4281670/django-best-way-to-unit-test-an-abstract-model
 class AbstractModelMixinTestCase(TestCase):
     """
@@ -18,16 +16,23 @@ class AbstractModelMixinTestCase(TestCase):
     """
     model = None
     mixin = None
+    app_label = None
 
     @classmethod
     def setUpClass(cls) -> None:
         assert cls.mixin is not None, 'Define a `mixin` property to be able to define concrete model'
 
+        class Meta():
+            app_label = cls.app_label
+
         # Create a dummy model which extends the mixin. A RuntimeWarning will occur if the model is registered twice
         if cls.model is None:
             cls.model = ModelBase('__Model__' + str(randint(0, 100000000)) + '__' + cls.mixin.__name__,
                                   (cls.mixin,),
-                                  {'__module__': cls.mixin.__module__})
+                                  {
+                                      '__module__': cls.mixin.__module__,
+                                      'Meta': Meta,
+                                  })
             cls.enhance_model()
 
         # Create the schema for our test model. If the table already exists, will pass

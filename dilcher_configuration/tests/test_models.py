@@ -7,6 +7,7 @@ from ..models import Setting, update_timestamps, ensure_active
 
 class SettingTestCase(AbstractModelMixinTestCase):
     mixin = Setting
+    app_label = "dilcher_configuration"
     """
     This test case runs unit tests for Setting model
     """
