@@ -56,7 +56,6 @@ pipeline {
   environment {
     DOCKER_HUB_ACCOUNT = 'dockerpush.env.liquidvu.com'
     DOCKER_IMAGE_NAME = 'dilcher-common-fe'
-    BRANCH_NAME_ESC = env.BRANCH_NAME.replace("/", "_")
   }
   stages {
     stage('Build with Kaniko') {
