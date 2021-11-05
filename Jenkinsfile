@@ -1,35 +1,69 @@
-#!groovy​
+/**
+ * This pipeline will build and deploy a Docker image with Kaniko
+ * https://github.com/GoogleContainerTools/kaniko
+ * without needing a Docker host
+ *
+ * You need to create a jenkins-docker-cfg secret with your docker config
+ * as described in
+ * https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#create-a-secret-in-the-cluster-that-holds-your-authorization-token
+ *
+ * ie.
+ * kubectl create secret docker-registry regcred --docker-server=https://index.docker.io/v1/ --docker-username=csanchez --docker-password=mypassword --docker-email=john@doe.com
+ */
 
-def label = "mypod-${UUID.randomUUID().toString()}"
-podTemplate(label: label, imagePullSecrets: ["regsecret"], containers: [
-    containerTemplate(name: 'docker', image: 'docker', ttyEnabled: true, command: 'cat',
-        envVars: [containerEnvVar(key: 'DOCKER_CONFIG', value: '/tmp/'),])],
-        volumes: [secretVolume(secretName: 'jenkins-docker-secret', mountPath: '/var/run/secrets/registry-account/'),
-        hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock'),
-        persistentVolumeClaim(claimName: 'jenkins-slave-docker-10gi', mountPath: '/var/lib/docker')
-  ]) {
-    node(label) {
-
-        def app
-        def BRANCH_NAME_ESC = env.BRANCH_NAME.replace("/", "_")
-
-        stage('Clone repository') {
-            /* Let's make sure we have the repository cloned to our workspace */
-            checkout scm
-        }
-
-        container('docker') {
-                stage('Docker Build & Push Current & Latest Versions') {
-                    sh ("""
-                    #!/bin/bash
-                    set +x
-                    PYPI_USER=`cat /var/run/secrets/registry-account/username`
-                    PYPI_PASSWORD=`cat /var/run/secrets/registry-account/password`
-                    docker build -t dilcher-configuration:${BRANCH_NAME_ESC}-${env.BUILD_NUMBER} --build-arg pypiuser="\${PYPI_USER}" --build-arg pypipass="\${PYPI_PASSWORD}" -f ./Dockerfile .
-                    docker image rm -f dilcher-configuration:${BRANCH_NAME_ESC}-${env.BUILD_NUMBER}
-                    """)
-                }
-        }
-
+pipeline {
+  agent {
+    kubernetes {
+      //cloud 'kubernetes'
+      defaultContainer 'kaniko'
+      yaml '''
+        kind: Pod
+        spec:
+          containers:
+          - name: kaniko
+            image: gcr.io/kaniko-project/executor:v1.7.0-debug
+            imagePullPolicy: Always
+            command:
+            - sleep
+            args:
+            - 99d
+            env:
+            - name: PYPI_USER
+              valueFrom:
+                secretKeyRef:
+                  name: jenkins-docker-secret
+                  key: username
+            - name: PYPI_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: jenkins-docker-secret
+                  key: password
+            volumeMounts:
+              - name: jenkins-docker-cfg
+                mountPath: /kaniko/.docker
+          volumes:
+          - name: jenkins-docker-cfg
+            projected:
+              sources:
+              - secret:
+                  name: regcred-push
+                  items:
+                    - key: .dockerconfigjson
+                      path: config.json
+'''
     }
+  }
+  environment {
+    DOCKER_HUB_ACCOUNT = 'dockerpush.env.liquidvu.com'
+    DOCKER_IMAGE_NAME = 'dilcher-common-fe'
+    BRANCH_NAME_ESC = env.BRANCH_NAME.replace("/", "_")
+  }
+  stages {
+    stage('Build with Kaniko') {
+      steps {
+        checkout scm
+        sh "/kaniko/executor -f \"`pwd`/Dockerfile\" -c \"`pwd`\" --no-push --build-arg pypiuser=\"\${PYPI_USER}\" --build-arg pypipass=\"\${PYPI_PASSWORD}\""
+      }
+    }
+  }
 }

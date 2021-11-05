@@ -31,12 +31,12 @@ pipeline {
             - name: PYPI_USER
               valueFrom:
                 secretKeyRef:
-                  name: jenkins-docker-secret
+                  name: jenkins-pypi-secret
                   key: username
             - name: PYPI_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: jenkins-docker-secret
+                  name: jenkins-pypi-secret
                   key: password
             volumeMounts:
               - name: jenkins-docker-cfg
@@ -62,7 +62,7 @@ pipeline {
     stage('Build with Kaniko') {
       steps {
         checkout scm
-        sh "/kaniko/executor -f \"`pwd`/dev.Dockerfile\" -c \"`pwd`\" --no-push --build-arg pypiuser=\"\${PYPI_USER}\" --build-arg pypipass=\"\${PYPI_PASSWORD}\" --build-arg pypidevtag=\"${BRANCH_NAME_ESC}\""
+        sh "/kaniko/executor -f \"`pwd`/pypi.Dockerfile\" -c \"`pwd`\" --no-push --build-arg pypiuser=\"\${PYPI_USER}\" --build-arg pypipass=\"\${PYPI_PASSWORD}\""
       }
     }
   }
