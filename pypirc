@@ -1,6 +1,4 @@
 [distutils]
 index-servers = pypi
 [pypi]
-repository: https://nexus.env.liquidvu.com/repository/pypi-internal/
-username: USERNAME
-password: PASSWORD
+repository: https://USERNAME:PASSWORD@nexus.env.liquidvu.com/repository/pypi-internal/
