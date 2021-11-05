@@ -28,4 +28,4 @@ RUN python setup.py sdist bdist_wheel
 RUN apk update
 RUN apk add --no-cache --virtual .build-deps build-base linux-headers python3-dev libffi libffi-dev py3-cffi libressl libressl-dev
 RUN python -m pip install --user --upgrade twine
-RUN python -m twine upload -u ${pypiuser} -p ${pypipass} dist/*
+RUN python -m twine upload -u ${pypiuser} -p "${pypipass}" dist/*
