@@ -68,7 +68,7 @@ pipeline {
         sh "rm -f \"`pwd`/testresult.tar\""
         sh "cd \"`pwd`/test_layer\" && tar -xzvf \"`pwd`/test_layer.tar.gz\""
         sh "mv \"`pwd`/test_layer/tmp/test/test-reports\" \"`pwd`/test_reports\""
-        cat "\"`pwd`/test_reports/coverage/coverage.xml\""
+        sh "cat \"`pwd`/test_reports/coverage/coverage.xml\""
         sh "rm -rf \"`pwd`/test_layer\""
       }
     }
