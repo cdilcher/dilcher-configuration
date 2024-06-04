@@ -72,8 +72,10 @@ pipeline {
       }
     }
     stage('Publishing test & coverage results') {
+      # Translate the cobertura command to recordCoverage using cobertura from the Coverage jenkins plugin
       steps {
-        cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/test_reports/coverage/coverage.xml', conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false
+        recordCoverage(tools: [[parser: 'COBERTURA', pattern: '**/test_reports/coverage/coverage.xml']], qualityGates: [[threshold: 80, type: 'LINE', unstable: true], [threshold: 80, type: 'METHOD', unstable: true], [threshold: 70, type: 'CONDITIONAL', unstable: true]])
+//         cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/test_reports/coverage/coverage.xml', conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false
         junit allowEmptyResults: true, testResults: '**/test_reports/unittest/unittest.xml'
         recordIssues(tools: [flake8(pattern: '**/test_reports/flake8/flake8.txt')])
       }
