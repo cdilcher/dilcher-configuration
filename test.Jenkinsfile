@@ -68,12 +68,17 @@ pipeline {
         sh "rm -f \"`pwd`/testresult.tar\""
         sh "cd \"`pwd`/test_layer\" && tar -xzvf \"`pwd`/test_layer.tar.gz\""
         sh "mv \"`pwd`/test_layer/tmp/test/test-reports\" \"`pwd`/test_reports\""
+        sh "sed -i -e \"s%/tmp/test%`pwd`%g\" \"`pwd`/test_reports/coverage/coverage.xml\""
         sh "rm -rf \"`pwd`/test_layer\""
       }
     }
     stage('Publishing test & coverage results') {
       steps {
-        recordCoverage(tools: [[parser: 'COBERTURA', pattern: '**/test_reports/coverage/coverage.xml']], qualityGates: [[threshold: 80, type: 'LINE', unstable: true], [threshold: 80, type: 'METHOD', unstable: true], [threshold: 70, type: 'CONDITIONAL', unstable: true]])
+        recordCoverage(
+            tools: [[parser: 'COBERTURA', pattern: '**/test_reports/coverage/coverage.xml']],
+            sourceDirectories: [[path: "."]],
+            qualityGates: [[threshold: 80, metric: 'LINE', baseline: 'PROJECT', unstable: true], [threshold: 80, metric: 'METHOD', baseline: 'PROJECT', unstable: true], [threshold: 80, metric: 'BRANCH', baseline: 'PROJECT', unstable: true], [threshold: 50, metric: 'FILE', baseline: 'PROJECT', unstable: true]]
+        )
 //         cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/test_reports/coverage/coverage.xml', conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false
         junit allowEmptyResults: true, testResults: '**/test_reports/unittest/unittest.xml'
         recordIssues(tools: [flake8(pattern: '**/test_reports/flake8/flake8.txt')])
