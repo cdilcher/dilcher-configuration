@@ -78,7 +78,7 @@ pipeline {
         recordCoverage(
             tools: [[parser: 'COBERTURA', pattern: '**/test_reports/coverage/coverage.xml']],
             sourceDirectories: [[path: "."]],
-            qualityGates: [[threshold: 80, metric: 'LINE', baseline: 'PROJECT', unstable: true], [threshold: 80, metric: 'METHOD', baseline: 'PROJECT', unstable: true], [threshold: 70, metric: 'CONDITIONAL', baseline: 'PROJECT', unstable: true]]
+            qualityGates: [[threshold: 80, metric: 'LINE', baseline: 'PROJECT', unstable: true], [threshold: 80, metric: 'METHOD', baseline: 'PROJECT', unstable: true], [threshold: 80, metric: 'BRANCH', baseline: 'PROJECT', unstable: true], [threshold: 70, metric: 'FILE', baseline: 'PROJECT', unstable: true]]
         )
 //         cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/test_reports/coverage/coverage.xml', conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false
         junit allowEmptyResults: true, testResults: '**/test_reports/unittest/unittest.xml'
