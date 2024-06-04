@@ -26,8 +26,8 @@ WORKDIR /tmp/dilcher-configuration
 RUN python setup.py sdist bdist_wheel
 # App is packaged, publish it
 COPY pypirc /tmp/
-RUN sed -e "s/USERNAME/${pypiuser}/g; s/PASSWORD/$(python3 -c 'import urllib.parse; import sys; print(urllib.parse.quote(sys.argv[1], safe=""))' "${pypipass}")/g;" /tmp/pypirc > /root/.pypirc
-RUN apk update
-RUN apk add --no-cache --virtual .build-deps build-base linux-headers python3-dev libffi libffi-dev py3-cffi libressl libressl-dev
-RUN python -m pip install --user --upgrade twine
-RUN python -m twine upload -r pypi -u ${pypiuser} -p "${pypipass}" dist/*
+#RUN sed -e "s/USERNAME/${pypiuser}/g; s/PASSWORD/$(python3 -c 'import urllib.parse; import sys; print(urllib.parse.quote(sys.argv[1], safe=""))' "${pypipass}")/g;" /tmp/pypirc > /root/.pypirc
+#RUN apk update
+#RUN apk add --no-cache --virtual .build-deps build-base linux-headers python3-dev libffi libffi-dev py3-cffi libressl libressl-dev
+#RUN python -m pip install --user --upgrade twine
+#RUN python -m twine upload -r pypi -u ${pypiuser} -p "${pypipass}" dist/*
